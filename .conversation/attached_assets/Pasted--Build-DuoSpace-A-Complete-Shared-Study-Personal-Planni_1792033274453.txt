@@ -1,0 +1,562 @@
+# Build DuoSpace — A Complete Shared Study & Personal Planning Web App
+
+Act as a senior full-stack developer, UI/UX designer, database architect, and security engineer. Build a fully functional, production-minded web application called **DuoSpace** for two people who want to manage Class 12 studies, daily tasks, personal goals, habits, and their shared schedule in one place.
+
+**Important:** Build a working application, not just a visual prototype. All buttons, forms, calendars, filters, task actions, charts, and settings must work. Store data in a real database and make changes synchronize between both users.
+
+## 1. Technology stack
+
+Use:
+- React + TypeScript + Vite.
+- Tailwind CSS with shadcn/ui components and Lucide icons.
+- Supabase PostgreSQL for persistent data.
+- Supabase Realtime for live synchronization.
+- Supabase Auth or an equivalent secure server-side session system.
+- Server-side functions for protected operations and scheduled in-app reminder processing.
+- Vercel or Cloudflare Pages for deployment, with Supabase as the backend.
+
+Choose compatible, currently supported dependencies. Create a clean, maintainable project structure with reusable components, loading states, error handling, form validation, and database migrations.
+
+Never expose service-role keys, database passwords, or other server secrets in client-side code.
+
+## 2. Access and two-profile system
+
+Create a Netflix-inspired entry experience.
+
+1. Show the DuoSpace logo and a dark cinematic background.
+2. Ask for one shared workspace password.
+3. Validate the password securely on the server.
+4. After successful validation, show two large profile cards.
+5. The user can select either profile without entering another password.
+6. Both profiles can view and edit shared tasks, calendar events, academic progress, goals, journals, and other workspace data.
+7. Display the currently selected profile and allow switching profiles without signing in again.
+8. Include secure logout, session expiry, and session revocation.
+
+Allow the two profile names, avatars, and accent colors to be customized in Settings.
+
+The profiles are for convenience, not separate security boundaries. Both authorized users have shared workspace access. Never store the shared password in plain text or validate it only in the frontend. Rate-limit password attempts and use secure server-side sessions. Do not put the workspace password in URLs, logs, or client storage.
+
+If a single shared password creates limitations in the selected authentication provider, implement a secure server-side workspace access flow and clearly document its setup.
+
+## 3. Visual design
+
+Create a polished, modern, premium-looking interface.
+
+Design direction:
+- Dark cinematic theme inspired by streaming platforms and modern productivity apps.
+- Deep navy and charcoal backgrounds.
+- Purple and electric-blue accents.
+- Soft gradients, subtle glow effects, restrained glassmorphism, and rounded cards.
+- Smooth, quick transitions and elegant hover states.
+- Clear typography, attractive icons, and consistent spacing.
+- Use charts, progress rings, timelines, and calendar views where useful.
+- Avoid excessive animations, clutter, and unnecessary decoration.
+
+Desktop:
+- Sidebar navigation.
+- Main content area.
+- Optional right panel for upcoming deadlines, reminders, and quick actions.
+
+Mobile:
+- Responsive layouts.
+- Collapsible navigation or bottom navigation.
+- Touch-friendly buttons and forms.
+- Calendars and tables that adapt to small screens.
+
+Support light and dark themes, with dark mode as the default. Make the app installable as a PWA if supported.
+
+## 4. Main dashboard
+
+Create a personalized dashboard showing:
+
+- Greeting for the selected profile.
+- Current date and a live daily overview.
+- Tasks due today.
+- Overdue tasks.
+- Upcoming deadlines and exams.
+- Academic progress by subject.
+- Today's planned study time.
+- Recent focus sessions.
+- Personal goals and habit completion.
+- Shared goals and check-ins.
+- A weekly completion chart.
+- A quick-add task button.
+- A compact **In-App Notifications** panel.
+- A workload indicator: light, balanced, or overloaded.
+
+Allow users to rearrange or configure dashboard widgets if practical.
+
+## 5. Shared task manager
+
+Both users must be able to create, view, edit, complete, delete, and reschedule tasks.
+
+Each task should support:
+- Title.
+- Description.
+- Category: Study, Homework, Revision, Exam Preparation, Personal, Habit, Project, Chore, Hobby, or Other.
+- Subject, when applicable.
+- Due date and optional deadline time.
+- Priority: Low, Medium, High, Urgent.
+- Status: Not Started, In Progress, Completed, or Cancelled.
+- Estimated duration.
+- Actual duration, if tracked.
+- Created by.
+- Assigned profile, both profiles, or the shared workspace.
+- Optional tags and notes.
+- Optional recurrence.
+- Optional subtasks or checklist.
+- Created and updated timestamps.
+
+Provide list, board, and calendar views.
+
+Include search, sorting, category filters, priority filters, date filters, and status filters. Allow quick completion from any relevant view.
+
+Keep a useful activity history for important changes, such as completion, rescheduling, and priority changes.
+
+Do not silently move unfinished tasks to another date. Suggest a new schedule and wait for user confirmation.
+
+## 6. Calendar and planner
+
+Create a unified calendar containing both academic and personal activities.
+
+Views:
+- Monthly.
+- Weekly.
+- Daily agenda.
+- Upcoming schedule.
+
+Display tasks, exams, study blocks, habits, personal deadlines, and shared events using distinguishable colors or icons.
+
+Allow users to:
+- Add and edit events.
+- Move events to a new date.
+- Set start and end times.
+- Create recurring events.
+- See overlapping commitments.
+- Filter by academic or personal category.
+- Navigate between dates.
+- View a chronological daily agenda.
+
+Use the user's configured time zone consistently.
+
+The calendar must combine schoolwork and personal activities so that the daily plan remains realistic.
+
+## 7. Class 12 academic planner
+
+Create an academic workspace designed for CBSE Class 12, with configurable subjects.
+
+Provide these default subjects:
+- Physics.
+- Chemistry.
+- Mathematics.
+- Computer Science.
+- English Core.
+- Artificial Intelligence.
+
+Allow subjects, chapters, topics, and exam information to be added, edited, reordered, or removed.
+
+### Syllabus tracking
+
+For each subject, display chapters and topics with these statuses:
+- Not Started.
+- Learning.
+- Practising.
+- Revised.
+
+Track chapter completion and show overall subject progress.
+
+Each chapter should support:
+- Important concepts.
+- Notes and resource links.
+- Weak topics.
+- Practice tasks.
+- Revision dates.
+- Confidence rating.
+- Last studied date.
+
+Do not invent a complete CBSE syllabus and present it as guaranteed current. Provide an editable starter structure and allow the user to import or create the exact syllabus they need.
+
+### Revision planner
+
+Support:
+- First study.
+- First revision.
+- Second revision.
+- Final revision.
+- Custom revision dates.
+
+Suggest revision sessions based on the exam date, topic confidence, and last revision. Keep suggestions editable and never overwrite a user's schedule without confirmation.
+
+### Practice tracking
+
+Allow the user to record:
+- Questions attempted.
+- Correct answers.
+- Incorrect answers.
+- Accuracy percentage.
+- Topic or chapter.
+- Date.
+- Notes about mistakes.
+
+Calculate accuracy safely when questions attempted is greater than zero. Show progress over time.
+
+### Exams and assessments
+
+Each exam should include:
+- Name.
+- Subject.
+- Date and time.
+- Syllabus coverage.
+- Preparation status.
+- Target score.
+- Actual score, when available.
+- Post-exam notes.
+
+Show upcoming exams prominently and help users plan revision backward from the exam date.
+
+## 8. Personal life planner
+
+Create a separate but connected personal planning area for:
+
+- Daily routines.
+- Morning and evening routines.
+- Habits.
+- Exercise and recreation.
+- Hobbies.
+- Reading.
+- Coding and skill development.
+- Personal projects.
+- Chores.
+- Important dates and personal deadlines.
+- Short-term and long-term goals.
+
+Allow users to set frequency, target days, reminders, notes, and completion history where relevant.
+
+Habit tracking must include a calendar or heatmap, daily check-ins, weekly completion rates, and optional streaks. Do not punish missed days or imply that a streak determines personal worth.
+
+Personal tasks must also appear in the unified calendar and affect workload calculations.
+
+## 9. Smart daily planning
+
+Create a daily planning assistant based on clear, explainable rules.
+
+It should consider:
+1. Urgent and overdue responsibilities.
+2. Approaching assignment and personal deadlines.
+3. Upcoming exams and required revisions.
+4. Important academic goals.
+5. Existing calendar commitments.
+6. Personal responsibilities.
+7. Optional hobbies and flexible activities.
+
+Use estimated task durations to calculate planned workload.
+
+Warn users when the available time is insufficient. Recommend a balanced plan with breaks and realistic study blocks.
+
+Allow users to accept, reject, or manually edit suggestions.
+
+Do not automatically change task deadlines or move unfinished tasks without confirmation. Do not use an external AI API unless explicitly configured by the owner. The core planner must function without a paid AI service.
+
+## 10. Focus timer and study sessions
+
+Create a Pomodoro-style focus timer with configurable work and break durations.
+
+Include:
+- Start, pause, resume, and stop.
+- Select a task, subject, or goal.
+- Short and long breaks.
+- Session notes.
+- Completion history.
+- Daily and weekly focus totals.
+- Subject-wise focus statistics.
+
+Persist sessions to the database. Use reliable timestamps and server/database records so that a page refresh does not lose the session. Correctly handle paused, interrupted, and completed sessions. Do not depend solely on a JavaScript interval to determine elapsed time.
+
+## 11. Shared goals and collaboration
+
+Create a shared goals area for both profiles.
+
+Each goal should have:
+- Title and description.
+- Target date.
+- Category.
+- Progress.
+- Milestones.
+- Linked tasks.
+- Optional weekly target.
+- Completion history.
+
+Include:
+- Shared weekly challenges.
+- Daily check-ins.
+- Encouraging messages.
+- A shared activity feed.
+- Progress summaries.
+- Optional reactions to milestones.
+
+Keep the tone positive and supportive. Avoid competitive rankings that shame either user.
+
+Both users should be able to see shared activity and progress. Changes should synchronize in real time when connected.
+
+## 12. Journaling and weekly review
+
+Provide private-to-the-workspace journal entries, since both authorized profiles share access.
+
+Each entry should support:
+- Date.
+- Title.
+- Rich or basic formatted text.
+- Mood or energy label, optional.
+- Tags.
+- Linked subject, goal, or task, optional.
+
+Clearly state that journal entries are visible to both workspace users.
+
+Create a weekly review page showing:
+- Completed and unfinished tasks.
+- Focus time.
+- Academic progress.
+- Practice accuracy.
+- Revision consistency.
+- Habit completion.
+- Goals achieved.
+- Main difficulties.
+- Priorities for the next week.
+
+Allow users to write their own reflections. Avoid presenting productivity statistics as measures of personal value.
+
+## 13. Website-only reminders and notification centre
+
+**Important: All reminders must appear only inside the DuoSpace website/app. Do not implement email, SMS, browser push notifications, or operating-system notifications.**
+
+Create an in-app notification centre accessible through a bell icon with an unread count.
+
+Generate reminders for:
+- Tasks approaching their deadlines.
+- Tasks due today.
+- Tasks that have become overdue.
+- Upcoming exams.
+- Scheduled revision sessions.
+- Homework and assignment deadlines.
+- Habit check-ins, if enabled.
+- Shared goal milestones and relevant collaboration updates.
+
+### Default reminder behaviour
+
+Make the default timing configurable. Suggested defaults:
+- One day before the deadline.
+- Two hours before the deadline.
+- A due-now reminder when the task is still incomplete.
+- One overdue reminder after the deadline.
+
+Allow users to change reminder timing or turn reminders off for individual tasks.
+
+### Notification rules
+
+- Check the current task status and deadline before creating or displaying a reminder.
+- If a task is completed or cancelled, do not show its pending deadline reminders.
+- If a deadline changes, update or cancel the old pending reminders.
+- Prevent duplicate notifications for the same event.
+- Respect the workspace time zone and user-configured quiet hours.
+- Allow snoozing, dismissing, and marking notifications as read.
+- Allow quick actions such as Complete Task, View Task, Snooze, and Reschedule.
+- Shared task reminders should follow the workspace's notification preferences and show which task they concern.
+- Clearly distinguish upcoming, due-today, overdue, and informational notifications.
+
+### Implementation requirements
+
+Persist notifications and their delivery/processing state in the database. Process due reminders using a reliable server-side scheduled function or scheduler. Do not rely solely on browser timers, because the page might be closed when a reminder becomes due.
+
+When a user opens the website, fetch and display all currently relevant unread notifications. Recheck task status before presenting a deadline reminder.
+
+Use idempotent reminder processing so repeated scheduled runs cannot create duplicate reminders. Handle retries and failures safely.
+
+The app does not need to send anything outside the website. If both users are online, update their notification centres using Supabase Realtime. If a user is offline, store the notification so it appears the next time they open the app.
+
+Add a notification history page with filters for unread, read, upcoming, overdue, exams, revision, and shared activity.
+
+## 14. Analytics and statistics
+
+Create useful charts and summaries for:
+- Task completion percentage.
+- Planned versus completed tasks.
+- Daily and weekly focus minutes.
+- Subject-wise study time.
+- Chapter and syllabus completion.
+- Practice accuracy over time.
+- Revision consistency.
+- Habit completion.
+- Upcoming workload.
+- Goal progress.
+
+Allow filtering by date range, subject, category, and selected profile where applicable.
+
+Distinguish between missing data and zero performance. Ensure all calculations use real database records rather than hardcoded demo values.
+
+## 15. Settings
+
+Include:
+- Profile names and avatars.
+- Theme.
+- Time zone.
+- Date and time format.
+- Default task duration.
+- Default focus timer settings.
+- Default reminder timings.
+- Per-category and per-task reminder preferences.
+- Quiet hours for in-app reminders.
+- Workspace password change.
+- Session logout and revocation.
+- Export of workspace data to a reasonable format, such as JSON or CSV.
+- Clear explanation that workspace data, including journal entries, is visible to both authorized users.
+
+## 16. Database design
+
+Design a normalized PostgreSQL schema with appropriate foreign keys, indexes, timestamps, constraints, and migrations.
+
+Create tables for at least:
+- workspaces
+- workspace_members
+- profiles
+- subjects
+- chapters
+- topics
+- tasks
+- task_checklists
+- task_events
+- calendar_events
+- exams
+- revision_schedule
+- practice_results
+- goals
+- goal_members
+- milestones
+- habits
+- habit_logs
+- study_blocks
+- focus_sessions
+- daily_checkins
+- journal_entries
+- reminders
+- notification_preferences
+- notification_inbox
+- notification_deliveries
+- activity_events
+
+Adapt the schema if necessary, but maintain data integrity and avoid redundant sources of truth.
+
+Include:
+- A stable workspace ID.
+- Stable user/profile IDs.
+- Created and updated timestamps.
+- Proper task-to-subject and task-to-goal relationships.
+- Unique constraints preventing duplicate reminder generation.
+- Indexes for due dates, task status, workspace IDs, and unread notifications.
+
+Both profiles should access the same workspace data according to the intended shared-access model.
+
+## 17. Security and privacy
+
+Implement real server-side authorization.
+
+- Enable Supabase Row Level Security on every exposed table.
+- Scope all queries and mutations to the authorized workspace.
+- Verify membership on the server or through correct RLS policies.
+- Never trust a workspace ID, profile ID, or selected profile supplied by the browser without authorization checks.
+- Validate inputs on both client and server.
+- Protect access and password-change endpoints against brute-force attempts.
+- Use secure session cookies or the authentication provider's secure session mechanism.
+- Keep secrets and privileged database credentials server-side.
+- Avoid logging passwords, session tokens, or private journal contents.
+- Prevent one workspace from accessing another workspace's records.
+- Verify that users cannot bypass permissions by directly calling database APIs.
+- Use safe error messages that do not reveal secrets.
+
+Since this app is intended for two trusted users, the shared workspace is the main access boundary. Do not incorrectly present profile selection as private account authentication.
+
+## 18. Performance and reliability
+
+- Use pagination or sensible limits for long activity and notification lists.
+- Add loading skeletons and empty states.
+- Provide meaningful error messages and retry actions.
+- Prevent double submissions.
+- Optimistically update the UI only when rollback is handled correctly.
+- Handle network loss and reconnect gracefully.
+- Ensure Realtime subscriptions are cleaned up correctly.
+- Avoid unnecessary database queries.
+- Make the interface accessible with keyboard navigation, clear focus states, and appropriate contrast.
+
+## 19. Seed data and first launch
+
+On first setup, provide a guided configuration flow for:
+- Workspace name.
+- Two profile names and avatars.
+- Class and academic year.
+- Subjects.
+- Time zone.
+- Default reminder settings.
+- Optional sample tasks.
+
+Sample data must be clearly identified and removable. Do not silently create fake completed tasks, exam scores, study statistics, or activity history.
+
+If database credentials or deployment secrets are missing, show clear setup instructions rather than pretending the app is connected.
+
+## 20. Testing and acceptance criteria
+
+Do not consider the project finished until the following work:
+
+1. The shared access password is validated securely.
+2. Successful access opens the two-profile selection screen.
+3. Both profiles can create, edit, complete, and reschedule shared tasks.
+4. Data remains after refresh, logout, and login.
+5. Changes made on one device appear on the other device through Realtime when connected.
+6. Calendar events, personal tasks, study tasks, and exams display correctly.
+7. Academic chapters and progress are stored in the database.
+8. Practice accuracy and analytics are calculated from actual records.
+9. The focus timer persists session information correctly.
+10. A deadline reminder appears inside the app at the configured time when the task is still incomplete.
+11. Completing or rescheduling a task prevents stale reminders from appearing.
+12. The notification centre does not create duplicates.
+13. Notifications generated while a user is offline are available when they return.
+14. No email, SMS, browser push, or operating-system notifications are sent or requested.
+15. RLS and server authorization prevent access to unauthorized workspaces.
+16. The app works on desktop and mobile.
+17. Every visible button and form performs its intended action.
+18. No main feature relies on hardcoded mock data.
+
+## 21. Build order
+
+Implement in these stages, testing each stage before continuing:
+
+Stage 1: Design system, responsive layouts, access screen, and profile selection.
+
+Stage 2: Secure authentication/session handling, Supabase schema, migrations, and RLS policies.
+
+Stage 3: Shared tasks, dashboard, and unified calendar.
+
+Stage 4: Academic subjects, syllabus, revision, exams, and practice tracking.
+
+Stage 5: Personal planner, habits, goals, and journal.
+
+Stage 6: Focus timer, analytics, and weekly reviews.
+
+Stage 7: Website-only reminders, notification centre, scheduled processing, and Realtime updates.
+
+Stage 8: Security testing, mobile testing, bug fixing, deployment, and setup documentation.
+
+Do not stop after generating the UI. Connect every main feature to the database and test its real behaviour.
+
+## Final deliverables
+
+Provide:
+- The complete working application.
+- Database schema and migration files.
+- Secure RLS policies.
+- Server-side functions and scheduled reminder configuration.
+- An `.env.example` file containing placeholder names only, never real secrets.
+- Setup and deployment instructions.
+- A list of environment variables that must be configured.
+- A test checklist for both profiles and two devices.
+- A clear list of any feature that could not be completed.
+
+**Priority:** A secure, functional, synchronized application with a beautiful interface is more important than adding unnecessary features. Build DuoSpace as a real shared workspace, not a static demo.
