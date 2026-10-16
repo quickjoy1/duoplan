@@ -143,18 +143,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorkspaceSettings"
-  /workspace/export:
-    get:
-      operationId: exportWorkspaceData
-      tags: [workspace]
-      summary: Download the authorized workspace data as JSON
-      responses:
-        "200":
-          description: Workspace export
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WorkspaceExport"
     patch:
       operationId: updateWorkspaceSettings
       tags: [workspace]
@@ -172,6 +160,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorkspaceSettings"
+  /workspace/export:
+    get:
+      operationId: exportWorkspaceData
+      tags: [workspace]
+      summary: Download the authorized workspace data as JSON
+      responses:
+        "200":
+          description: Workspace export
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkspaceExport"
   /tasks:
     get:
       operationId: listTasks

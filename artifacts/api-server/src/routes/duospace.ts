@@ -141,6 +141,16 @@ function dateInZone(value: Date, timezone: string): string {
   }).format(value);
 }
 
+function parseDateQuery(value: unknown): Date | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return new Date(Number.NaN);
+  }
+  const date = new Date(`${value}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return new Date(Number.NaN);
+  return date.toISOString().slice(0, 10) === value ? date : new Date(Number.NaN);
+}
+
 function taskDto(row: typeof tasksTable.$inferSelect) {
   return {
     id: row.id,
@@ -505,12 +515,13 @@ router.get("/workspace/export", async (_req, res): Promise<void> => {
 
 router.get("/workspace/dashboard", async (req, res): Promise<void> => {
   const context = routeContext(res);
-  const parsed = GetDashboardQueryParams.safeParse(req.query);
+  const parsed = GetDashboardQueryParams.safeParse({ date: parseDateQuery(req.query.date) });
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
-  const targetDate = parsed.data.date ?? dateInZone(new Date(), context.workspace.timezone);
+  const targetDate = parsed.data.date?.toISOString().slice(0, 10)
+    ?? dateInZone(new Date(), context.workspace.timezone);
   const [allTasks, subjects, chapters, goals, habits, logs, notifications, activities, focus] =
     await Promise.all([
       db.select().from(tasksTable).where(eq(tasksTable.workspaceId, context.workspace.id)).orderBy(asc(tasksTable.dueAt)).limit(250),
@@ -725,15 +736,29 @@ router.delete("/tasks/:taskId", async (req, res): Promise<void> => {
 });
 
 router.get("/calendar-events", async (req, res): Promise<void> => {
-  const parsed = ListCalendarEventsQueryParams.safeParse(req.query);
+  const parsed = ListCalendarEventsQueryParams.safeParse({
+    from: parseDateQuery(req.query.from),
+    to: parseDateQuery(req.query.to),
+  });
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
   const context = routeContext(res);
   const filters = [eq(calendarEventsTable.workspaceId, context.workspace.id)];
-  if (parsed.data.from) filters.push(gte(calendarEventsTable.startAt, new Date(`${parsed.data.from}T00:00:00.000Z`)));
-  if (parsed.data.to) filters.push(lte(calendarEventsTable.startAt, new Date(`${parsed.data.to}T23:59:59.999Z`)));
+  if (parsed.data.from) filters.push(gte(calendarEventsTable.startAt, parsed.data.from));
+  if (parsed.data.to) {
+    const date = parsed.data.to;
+    filters.push(lte(calendarEventsTable.startAt, new Date(Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      23,
+      59,
+      59,
+      999,
+    ))));
+  }
   const rows = await db.select().from(calendarEventsTable).where(and(...filters)).orderBy(asc(calendarEventsTable.startAt)).limit(400);
   res.json(ListCalendarEventsResponse.parse({ items: rows.map(calendarDto) }));
 });
@@ -1346,15 +1371,29 @@ router.delete("/journal-entries/:entryId", async (req, res): Promise<void> => {
 });
 
 router.get("/focus-sessions", async (req, res): Promise<void> => {
-  const parsed = ListFocusSessionsQueryParams.safeParse(req.query);
+  const parsed = ListFocusSessionsQueryParams.safeParse({
+    from: parseDateQuery(req.query.from),
+    to: parseDateQuery(req.query.to),
+  });
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
     return;
   }
   const context = routeContext(res);
   const filters = [eq(focusSessionsTable.workspaceId, context.workspace.id)];
-  if (parsed.data.from) filters.push(gte(focusSessionsTable.startedAt, new Date(`${parsed.data.from}T00:00:00.000Z`)));
-  if (parsed.data.to) filters.push(lte(focusSessionsTable.startedAt, new Date(`${parsed.data.to}T23:59:59.999Z`)));
+  if (parsed.data.from) filters.push(gte(focusSessionsTable.startedAt, parsed.data.from));
+  if (parsed.data.to) {
+    const date = parsed.data.to;
+    filters.push(lte(focusSessionsTable.startedAt, new Date(Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth(),
+      date.getUTCDate(),
+      23,
+      59,
+      59,
+      999,
+    ))));
+  }
   const rows = await db.select().from(focusSessionsTable).where(and(...filters)).orderBy(desc(focusSessionsTable.createdAt)).limit(250);
   const items = rows.map((row) => {
     return {

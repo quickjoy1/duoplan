@@ -827,89 +827,12 @@ export function useGetWorkspaceSettings<TData = Awaited<ReturnType<typeof getWor
 
 
 
-export const getExportWorkspaceDataUrl = () => {
-
-
-
-
-  return `/api/workspace/export`
-}
-
-/**
- * @summary Download the authorized workspace data as JSON
- */
-export const exportWorkspaceData = async ( options?: Parameters<typeof customFetch>[1]): Promise<WorkspaceExport> => {
-
-  return customFetch<WorkspaceExport>(getExportWorkspaceDataUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getExportWorkspaceDataQueryKey = () => {
-    return [
-    `/api/workspace/export`
-    ] as const;
-    }
-
-
-export const getExportWorkspaceDataQueryOptions = <TData = Awaited<ReturnType<typeof exportWorkspaceData>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportWorkspaceData>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getExportWorkspaceDataQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportWorkspaceData>>> = ({ signal }) => exportWorkspaceData({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportWorkspaceData>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type ExportWorkspaceDataQueryResult = NonNullable<Awaited<ReturnType<typeof exportWorkspaceData>>>
-export type ExportWorkspaceDataQueryError = ErrorType<unknown>
-
-
-/**
- * @summary Download the authorized workspace data as JSON
- */
-
-export function useExportWorkspaceData<TData = Awaited<ReturnType<typeof exportWorkspaceData>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportWorkspaceData>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getExportWorkspaceDataQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
 export const getUpdateWorkspaceSettingsUrl = () => {
 
 
 
 
-  return `/api/workspace/export`
+  return `/api/workspace/settings`
 }
 
 /**
@@ -991,6 +914,83 @@ export const useUpdateWorkspaceSettings = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getUpdateWorkspaceSettingsMutationOptions(options));
     }
+
+export const getExportWorkspaceDataUrl = () => {
+
+
+
+
+  return `/api/workspace/export`
+}
+
+/**
+ * @summary Download the authorized workspace data as JSON
+ */
+export const exportWorkspaceData = async ( options?: Parameters<typeof customFetch>[1]): Promise<WorkspaceExport> => {
+
+  return customFetch<WorkspaceExport>(getExportWorkspaceDataUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportWorkspaceDataQueryKey = () => {
+    return [
+    `/api/workspace/export`
+    ] as const;
+    }
+
+
+export const getExportWorkspaceDataQueryOptions = <TData = Awaited<ReturnType<typeof exportWorkspaceData>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportWorkspaceData>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportWorkspaceDataQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportWorkspaceData>>> = ({ signal }) => exportWorkspaceData({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportWorkspaceData>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportWorkspaceDataQueryResult = NonNullable<Awaited<ReturnType<typeof exportWorkspaceData>>>
+export type ExportWorkspaceDataQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Download the authorized workspace data as JSON
+ */
+
+export function useExportWorkspaceData<TData = Awaited<ReturnType<typeof exportWorkspaceData>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportWorkspaceData>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportWorkspaceDataQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListTasksUrl = (params?: ListTasksParams,) => {
   const normalizedParams = new URLSearchParams();

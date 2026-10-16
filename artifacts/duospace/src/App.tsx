@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { MutationCache, QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Link, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import {
   Activity as ActivityIcon, ArrowRight, Bell, BookOpen, CalendarDays,
@@ -30,9 +30,18 @@ import NotFound from '@/pages/not-found';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { toast } from '@/hooks/use-toast';
 import './index.css';
 
-const client = new QueryClient({ defaultOptions: { queries: { staleTime: 20_000, retry: 1 } } });
+const client = new QueryClient({
+  mutationCache: new MutationCache({
+    onError: error => toast({
+      title: 'Could not save that change',
+      description: error instanceof Error ? error.message : 'Please try again.',
+    }),
+  }),
+  defaultOptions: { queries: { staleTime: 20_000, retry: 1 } },
+});
 const routes = [
   { path: '/', label: 'Overview', icon: Home },
   { path: '/tasks', label: 'Tasks', icon: ListTodo },
@@ -46,7 +55,13 @@ const routes = [
   { path: '/settings', label: 'Settings', icon: SettingsIcon },
 ];
 
-const dateOnly = () => new Date().toISOString().slice(0, 10);
+const localDateOnly = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+const dateOnly = () => localDateOnly(new Date());
 const stamp = (value?: string | null, opts?: Intl.DateTimeFormatOptions) =>
   value ? new Date(value).toLocaleDateString(undefined, opts ?? { month: 'short', day: 'numeric' }) : 'No date';
 const niceError = (e: unknown) => e instanceof Error ? e.message : 'Something went wrong. Please try again.';
@@ -267,7 +282,7 @@ function CalendarPage() {
   const [category, setCategory] = useState('Study');
   const start = new Date(month.getFullYear(), month.getMonth(), 1);
   const end = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-  const params = { from: start.toISOString(), to: new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59).toISOString() };
+  const params = { from: localDateOnly(start), to: localDateOnly(end) };
   const query = useListCalendarEvents(params);
   const create = useCreateCalendarEvent(); const update = useUpdateCalendarEvent(); const del = useDeleteCalendarEvent(); const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ queryKey: getListCalendarEventsQueryKey() });
@@ -400,12 +415,12 @@ function SettingsPage() {
               <div className="settings-section-head"><span className="settings-icon"><LockKeyhole size={18} /></span><div><h2>Profiles</h2><p>Both profiles have access to the same workspace data.</p></div></div>
               <div className="settings-profiles">{profiles.map(profile => <div className="settings-profile" key={profile.id}>
                 <span className="mini-avatar" style={{ '--profile-accent': profile.accent } as React.CSSProperties}>{profile.avatar || profile.name.slice(0, 1)}</span>
-                <Field label="Profile name"><TextInput value={profile.name} maxLength={80} onChange={e => updateProfile(profile.id, 'name', e.target.value)} data-testid={`input-profile-name-${profile.id}`} /></Field>
+                <Field label="Profile name"><TextInput value={profile.name} maxLength={80} required onChange={e => updateProfile(profile.id, 'name', e.target.value)} data-testid={`input-profile-name-${profile.id}`} /></Field>
                 <Field label="Avatar label"><TextInput value={profile.avatar} maxLength={3} onChange={e => updateProfile(profile.id, 'avatar', e.target.value)} data-testid={`input-profile-avatar-${profile.id}`} /></Field>
                 <Field label="Accent"><TextInput type="color" value={profile.accent} onChange={e => updateProfile(profile.id, 'accent', e.target.value)} data-testid={`input-profile-accent-${profile.id}`} /></Field>
               </div>)}</div>
             </section>
-            <div className="settings-save"><span className="muted-copy">Changes apply to the shared workspace.</span><Button kind="primary" type="submit" disabled={update.isPending} testId="button-save-settings">{update.isPending ? 'Saving…' : 'Save settings'}</Button>{update.error && <span className="form-error">{niceError(update.error)}</span>}</div>
+            <div className="settings-save"><span className="muted-copy">Changes apply to the shared workspace.</span>{update.isSuccess && <span className="muted-copy" role="status">Settings saved.</span>}<Button kind="primary" type="submit" disabled={update.isPending} testId="button-save-settings">{update.isPending ? 'Saving…' : 'Save settings'}</Button>{update.error && <span className="form-error">{niceError(update.error)}</span>}</div>
           </form>
           <section className="settings-card card security-settings">
             <div className="settings-section-head"><span className="settings-icon"><LockKeyhole size={18} /></span><div><h2>Workspace security</h2><p>Changing the shared password signs both profiles out on all devices.</p></div></div>

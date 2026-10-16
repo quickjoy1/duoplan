@@ -6,6 +6,7 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+app.disable("etag");
 app.use(
   pinoHttp({
     logger,
@@ -28,6 +29,10 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use("/api", (_req, res, next) => {
+  res.setHeader("Cache-Control", "private, no-store");
+  next();
+});
 
 app.use("/api", router);
 

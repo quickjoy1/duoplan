@@ -240,27 +240,6 @@ export const GetWorkspaceSettingsResponse = zod.object({
 
 
 /**
- * @summary Download the authorized workspace data as JSON
- */
-export const ExportWorkspaceDataResponse = zod.object({
-  "exportedAt": zod.coerce.date(),
-  "workspace": zod.record(zod.string(), zod.unknown()),
-  "profiles": zod.array(zod.record(zod.string(), zod.unknown())),
-  "tasks": zod.array(zod.record(zod.string(), zod.unknown())),
-  "calendarEvents": zod.array(zod.record(zod.string(), zod.unknown())),
-  "subjects": zod.array(zod.record(zod.string(), zod.unknown())),
-  "chapters": zod.array(zod.record(zod.string(), zod.unknown())),
-  "goals": zod.array(zod.record(zod.string(), zod.unknown())),
-  "habits": zod.array(zod.record(zod.string(), zod.unknown())),
-  "habitLogs": zod.array(zod.record(zod.string(), zod.unknown())),
-  "journalEntries": zod.array(zod.record(zod.string(), zod.unknown())),
-  "focusSessions": zod.array(zod.record(zod.string(), zod.unknown())),
-  "notifications": zod.array(zod.record(zod.string(), zod.unknown())),
-  "activity": zod.array(zod.record(zod.string(), zod.unknown()))
-})
-
-
-/**
  * @summary Update workspace settings or profile details
  */
 export const updateWorkspaceSettingsBodyNameMax = 100;
@@ -306,6 +285,27 @@ export const UpdateWorkspaceSettingsResponse = zod.object({
   "focusMinutes": zod.number().int(),
   "shortBreakMinutes": zod.number().int(),
   "longBreakMinutes": zod.number().int()
+})
+
+
+/**
+ * @summary Download the authorized workspace data as JSON
+ */
+export const ExportWorkspaceDataResponse = zod.object({
+  "exportedAt": zod.coerce.date(),
+  "workspace": zod.record(zod.string(), zod.unknown()),
+  "profiles": zod.array(zod.record(zod.string(), zod.unknown())),
+  "tasks": zod.array(zod.record(zod.string(), zod.unknown())),
+  "calendarEvents": zod.array(zod.record(zod.string(), zod.unknown())),
+  "subjects": zod.array(zod.record(zod.string(), zod.unknown())),
+  "chapters": zod.array(zod.record(zod.string(), zod.unknown())),
+  "goals": zod.array(zod.record(zod.string(), zod.unknown())),
+  "habits": zod.array(zod.record(zod.string(), zod.unknown())),
+  "habitLogs": zod.array(zod.record(zod.string(), zod.unknown())),
+  "journalEntries": zod.array(zod.record(zod.string(), zod.unknown())),
+  "focusSessions": zod.array(zod.record(zod.string(), zod.unknown())),
+  "notifications": zod.array(zod.record(zod.string(), zod.unknown())),
+  "activity": zod.array(zod.record(zod.string(), zod.unknown()))
 })
 
 
