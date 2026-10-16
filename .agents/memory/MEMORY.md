@@ -1,0 +1,1 @@
+- [DuoSpace database choice](duospace-database.md) — the user selected Replit managed PostgreSQL after no Supabase connection was available.

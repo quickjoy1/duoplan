@@ -50,6 +50,9 @@ const dateOnly = () => new Date().toISOString().slice(0, 10);
 const stamp = (value?: string | null, opts?: Intl.DateTimeFormatOptions) =>
   value ? new Date(value).toLocaleDateString(undefined, opts ?? { month: 'short', day: 'numeric' }) : 'No date';
 const niceError = (e: unknown) => e instanceof Error ? e.message : 'Something went wrong. Please try again.';
+const applyTheme = (theme: string, systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches) => {
+  document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && systemDark));
+};
 
 function Button({ children, onClick, kind = 'quiet', type = 'button', disabled = false, testId }: {
   children: React.ReactNode; onClick?: () => void; kind?: 'quiet' | 'primary' | 'danger' | 'outline';
@@ -102,12 +105,15 @@ function WorkspaceGate() {
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [profileBusy, setProfileBusy] = useState(false);
-  const setTheme = (theme: string) => {
-    document.documentElement.classList.toggle('dark', theme !== 'light');
-  };
   useEffect(() => {
     const theme = settings.data?.theme;
-    if (theme) setTheme(theme);
+    if (!theme) return;
+    applyTheme(theme);
+    if (theme !== 'system') return;
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const updateSystemTheme = (event: MediaQueryListEvent) => applyTheme('system', event.matches);
+    media.addEventListener('change', updateSystemTheme);
+    return () => media.removeEventListener('change', updateSystemTheme);
   }, [settings.data?.theme]);
   useEffect(() => {
     if (!session.data?.authenticated || !session.data.selectedProfileId) return;
@@ -360,8 +366,8 @@ function SettingsPage() {
   const [profiles, setProfiles] = useState<Array<{ id: string; name: string; avatar: string; accent: string }>>([]);
   const [currentPassword, setCurrentPassword] = useState(''); const [newPassword, setNewPassword] = useState(''); const [securityMessage, setSecurityMessage] = useState('');
   useEffect(() => { if (!query.data) return; setName(query.data.name); setTimezone(query.data.timezone); setTheme(query.data.theme); setFocus(query.data.focusMinutes); setShort(query.data.shortBreakMinutes); setLong(query.data.longBreakMinutes); setDefaultTaskDuration(query.data.defaultTaskDuration); setProfiles(query.data.profiles.map(profile => ({ ...profile }))); }, [query.data]);
-  const save = (e: React.FormEvent) => { e.preventDefault(); update.mutate({ data: { name, timezone, theme: theme as 'dark' | 'light' | 'system', focusMinutes: Number(focus), shortBreakMinutes: Number(short), longBreakMinutes: Number(long), defaultTaskDuration: Number(defaultTaskDuration), profiles } }, { onSuccess: async () => { document.documentElement.classList.toggle('dark', theme !== 'light'); await qc.invalidateQueries({ queryKey: getGetWorkspaceSettingsQueryKey() }); } }); };
-  const chooseTheme = (value: string) => { setTheme(value); document.documentElement.classList.toggle('dark', value !== 'light'); };
+  const save = (e: React.FormEvent) => { e.preventDefault(); update.mutate({ data: { name, timezone, theme: theme as 'dark' | 'light' | 'system', focusMinutes: Number(focus), shortBreakMinutes: Number(short), longBreakMinutes: Number(long), defaultTaskDuration: Number(defaultTaskDuration), profiles } }, { onSuccess: async () => { applyTheme(theme); await Promise.all([qc.invalidateQueries({ queryKey: getGetWorkspaceSettingsQueryKey() }), qc.invalidateQueries({ queryKey: getGetAuthSessionQueryKey() })]); } }); };
+  const chooseTheme = (value: string) => { setTheme(value); applyTheme(value); };
   const submitPasswordChange = (e: React.FormEvent) => { e.preventDefault(); setSecurityMessage(''); changePassword.mutate({ data: { currentPassword, newPassword } }, { onSuccess: async () => { setCurrentPassword(''); setNewPassword(''); setSecurityMessage('Password changed. You’ll need to sign in again with the new password.'); await qc.invalidateQueries({ queryKey: getGetAuthSessionQueryKey() }); }, onError: err => setSecurityMessage(niceError(err)) }); };
   const updateProfile = (profileId: string, key: 'name' | 'avatar' | 'accent', value: string) => setProfiles(current => current.map(profile => profile.id === profileId ? { ...profile, [key]: value } : profile));
   return (

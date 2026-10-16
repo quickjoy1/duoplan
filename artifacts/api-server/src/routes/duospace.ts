@@ -20,7 +20,6 @@ import {
 } from "@workspace/db";
 import {
   ChangeWorkspacePasswordBody,
-  ChangeWorkspacePasswordResponse,
   CreateCalendarEventBody,
   CreateCalendarEventResponse,
   CreateChapterBody,
@@ -73,7 +72,6 @@ import {
   MarkNotificationReadResponse,
   SelectProfileBody,
   SelectProfileResponse,
-  RevokeWorkspaceSessionsResponse,
   UpdateCalendarEventBody,
   UpdateCalendarEventParams,
   UpdateCalendarEventResponse,
