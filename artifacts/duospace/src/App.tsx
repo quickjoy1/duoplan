@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MutationCache, QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
 import { Link, Route, Switch, useLocation, Router as WouterRouter } from 'wouter';
 import {
   Activity as ActivityIcon, ArrowRight, Bell, BookOpen, CalendarDays,
   Check, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Flame, Focus, Home,
   ListTodo, LockKeyhole, LogOut, Moon, NotebookPen, Plus, Search, Settings as SettingsIcon,
-  Pencil, Sparkles, Sun, Target, Trash2, X,
+  Maximize2, Minimize2, Pencil, Sparkles, Sun, Target, Trash2, X,
 } from 'lucide-react';
 import {
   getGetAuthSessionQueryKey, getGetDashboardQueryKey, getGetWorkspaceSettingsQueryKey,
@@ -197,20 +197,22 @@ function WorkspaceGate() {
 function AppShell({ auth, onLogout, onSwitchProfile }: { auth: AuthSession; onLogout: () => void; onSwitchProfile: (profileId: string) => void }) {
   const [location] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const reminders = useListNotifications();
+  const unreadReminders = reminders.data?.unreadCount ?? 0;
   const current = auth.profiles.find(p => p.id === auth.selectedProfileId);
   const otherProfile = auth.profiles.find(p => p.id !== auth.selectedProfileId);
   return <div className="app-frame">
     <aside className={`sidebar ${mobileOpen ? 'sidebar-open' : ''}`}>
       <Link href="/" className="brand side-brand" onClick={() => setMobileOpen(false)}><span className="brand-symbol"><span /><span /></span><span>duospace</span></Link>
       <div className="space-label">YOUR SHARED SPACE</div>
-      <nav className="main-nav" aria-label="Main navigation">{routes.map(({ path, label, icon: Icon }) => <Link key={path} href={path} onClick={() => setMobileOpen(false)} className={`nav-link ${location === path ? 'nav-active' : ''}`} data-testid={`link-nav-${path.slice(1) || 'overview'}`}><Icon size={17} strokeWidth={1.8} /><span>{label}</span>{label === 'Reminders' && <span className="nav-indicator" />}</Link>)}</nav>
+      <nav className="main-nav" aria-label="Main navigation">{routes.map(({ path, label, icon: Icon }) => <Link key={path} href={path} onClick={() => setMobileOpen(false)} className={`nav-link ${location === path ? 'nav-active' : ''}`} data-testid={`link-nav-${path.slice(1) || 'overview'}`}><Icon size={17} strokeWidth={1.8} /><span>{label}</span>{label === 'Reminders' && unreadReminders > 0 && <span className="nav-indicator" aria-label={`${unreadReminders} unread reminders`} />}</Link>)}</nav>
       <div className="sidebar-bottom">
         <div className="sidebar-note"><span className="note-orbit"><Sparkles size={14} /></span><div><strong>Move at your pace.</strong><span>Small steps still count.</span></div></div>
         <div className="sidebar-profile"><span className="mini-avatar" style={{ '--profile-accent': current?.accent } as React.CSSProperties}>{current?.avatar || current?.name.slice(0, 1)}</span><div className="sidebar-person"><strong>{current?.name || 'Study partner'}</strong><span>{auth.workspaceName}</span></div>{otherProfile && <button className="icon-button" title={`Switch to ${otherProfile.name}`} aria-label={`Switch profile to ${otherProfile.name}`} onClick={() => onSwitchProfile(otherProfile.id)} data-testid="button-switch-profile"><Sparkles size={15} /></button>}<button className="icon-button logout-button" title="Leave workspace" aria-label="Leave workspace" onClick={onLogout} data-testid="button-logout"><LogOut size={16} /></button></div>
       </div>
     </aside>
     <div className="app-main">
-      <header className="topbar"><button className="mobile-menu icon-button" onClick={() => setMobileOpen(v => !v)} aria-label="Toggle navigation" data-testid="button-mobile-menu"><ListTodo size={18} /></button><div className="breadcrumbs">DuoSpace <span>/</span> {routes.find(r => r.path === location)?.label || 'Overview'}</div><div className="topbar-right"><Link href="/notifications" className="top-icon" aria-label="Notifications" data-testid="link-notifications"><Bell size={17} /><span /></Link><span className="topbar-divider" /><span className="today-label">{new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span></div></header>
+      <header className="topbar"><button className="mobile-menu icon-button" onClick={() => setMobileOpen(v => !v)} aria-label="Toggle navigation" data-testid="button-mobile-menu"><ListTodo size={18} /></button><div className="breadcrumbs">DuoSpace <span>/</span> {routes.find(r => r.path === location)?.label || 'Overview'}</div><div className="topbar-right"><Link href="/notifications" className="top-icon" aria-label={unreadReminders ? `Notifications, ${unreadReminders} unread` : 'Notifications'} data-testid="link-notifications"><Bell size={17} />{unreadReminders > 0 && <span className="notification-badge">{unreadReminders > 9 ? '9+' : unreadReminders}</span>}</Link><span className="topbar-divider" /><span className="today-label">{new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span></div></header>
       <main className="page-content"><Switch>
         <Route path="/" component={DashboardPage} />
         <Route path="/tasks" component={TasksPage} />
@@ -336,16 +338,66 @@ function JournalPage() {
 }
 
 function FocusPage() {
-  const query = useListFocusSessions(); const create = useCreateFocusSession(); const update = useUpdateFocusSession(); const settings = useGetWorkspaceSettings(); const qc = useQueryClient();
-  const [seconds, setSeconds] = useState(0); const [running, setRunning] = useState(false); const [sessionId, setSessionId] = useState<string | null>(null);
+  const query = useListFocusSessions();
+  const create = useCreateFocusSession();
+  const update = useUpdateFocusSession();
+  const settings = useGetWorkspaceSettings();
+  const qc = useQueryClient();
+  const focusPanelRef = useRef<HTMLElement | null>(null);
+  const [seconds, setSeconds] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const duration = (settings.data?.focusMinutes || 25) * 60;
-  useEffect(() => { if (!running) return; const timer = window.setInterval(() => setSeconds(s => s + 1), 1000); return () => window.clearInterval(timer); }, [running]);
-  const refresh = () => Promise.all([qc.invalidateQueries({ queryKey: getListFocusSessionsQueryKey() }), qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() })]);
-  const begin = () => { const now = new Date().toISOString(); create.mutate({ data: { startedAt: now } }, { onSuccess: session => { setSessionId(session.id); setSeconds(session.elapsedSeconds || 0); setRunning(true); void qc.invalidateQueries({ queryKey: getListFocusSessionsQueryKey() }); } }); };
-  const finish = (status: 'completed' | 'interrupted') => { if (!sessionId) return; update.mutate({ sessionId, data: { status, endedAt: new Date().toISOString(), elapsedSeconds: seconds } }, { onSuccess: () => { setRunning(false); setSessionId(null); setSeconds(0); void refresh(); } }); };
+
+  useEffect(() => {
+    if (!running) return;
+    const timer = window.setInterval(() => setSeconds(value => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [running]);
+
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(document.fullscreenElement === focusPanelRef.current);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !document.fullscreenElement) setIsFullscreen(false);
+    };
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('fullscreenchange', syncFullscreen);
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
+  const refresh = () => Promise.all([
+    qc.invalidateQueries({ queryKey: getListFocusSessionsQueryKey() }),
+    qc.invalidateQueries({ queryKey: getGetDashboardQueryKey() }),
+  ]);
+  const begin = () => {
+    const now = new Date().toISOString();
+    create.mutate({ data: { startedAt: now } }, {
+      onSuccess: session => {
+        setSessionId(session.id);
+        setSeconds(session.elapsedSeconds || 0);
+        setRunning(true);
+        void qc.invalidateQueries({ queryKey: getListFocusSessionsQueryKey() });
+      },
+    });
+  };
+  const finish = (status: 'completed' | 'interrupted') => {
+    if (!sessionId) return;
+    update.mutate({ sessionId, data: { status, endedAt: new Date().toISOString(), elapsedSeconds: seconds } }, {
+      onSuccess: () => {
+        setRunning(false);
+        setSessionId(null);
+        setSeconds(0);
+        void refresh();
+      },
+    });
+  };
   useEffect(() => {
     if (!query.data || sessionId) return;
-    const active = query.data.items.find(s => s.status === 'running' || s.status === 'paused');
+    const active = query.data.items.find(session => session.status === 'running' || session.status === 'paused');
     if (!active) return;
     setSessionId(active.id);
     const elapsed = active.status === 'running'
@@ -361,11 +413,71 @@ function FocusPage() {
       onSuccess: () => setRunning(next === 'running'),
     });
   };
+  const toggleFullscreen = async () => {
+    const panel = focusPanelRef.current;
+    if (isFullscreen) {
+      setIsFullscreen(false);
+      if (document.fullscreenElement === panel) {
+        try {
+          await document.exitFullscreen();
+        } catch {
+          // The fixed-position fallback is already dismissed.
+        }
+      }
+      return;
+    }
+    setIsFullscreen(true);
+    if (panel?.requestFullscreen) {
+      try {
+        await panel.requestFullscreen();
+      } catch {
+        // Keep the in-app full-screen fallback if browser fullscreen is blocked.
+      }
+    }
+  };
   const remaining = Math.max(0, duration - seconds);
-  useEffect(() => { if (running && seconds >= duration && sessionId) finish('completed'); // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (running && seconds >= duration && sessionId) finish('completed');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seconds, duration, running, sessionId]);
-  const mins = Math.floor(remaining / 60).toString().padStart(2, '0'); const secs = (remaining % 60).toString().padStart(2, '0');
-  return <div className="page-enter"><PageTitle eyebrow="One thing at a time" title="Focus" detail="A quiet timer for making a little progress." /><div className="focus-layout"><section className="focus-main card"><div className="focus-top"><span className="eyebrow">{sessionId ? 'SESSION IN PROGRESS' : 'YOUR FOCUS SPACE'}</span><span className="focus-status"><span className={running ? 'signal-dot' : 'signal-dot signal-muted'} />{running ? 'In focus' : sessionId ? 'Paused' : `${settings.data?.focusMinutes || 25} minute session`}</span></div><div className="timer-ring"><div className="timer-inner"><span className="timer-time">{mins}:{secs}</span><span>{running ? 'stay with it' : sessionId ? 'take your time' : 'make a start'}</span></div></div><p className="focus-encouragement">{running ? 'You don’t have to hurry. Just keep this one moment.' : 'Choose one small thing. The rest can wait.'}</p><div className="focus-controls">{sessionId ? <><Button kind="outline" onClick={toggleTimer} disabled={update.isPending}>{running ? 'Pause timer' : 'Resume timer'}</Button><Button kind="primary" onClick={() => finish('completed')} disabled={update.isPending}><Check size={16} /> Finish session</Button><Button kind="quiet" onClick={() => finish('interrupted')} disabled={update.isPending}>End early</Button></> : <Button kind="primary" onClick={begin} disabled={create.isPending}><Focus size={16} /> {create.isPending ? 'Starting…' : 'Begin focus'}</Button>}</div></section><aside className="focus-aside"><section className="focus-tip card"><span className="tip-symbol"><Sparkles size={17} /></span><span className="eyebrow">A gentle reminder</span><h2>Rest is part of the work.</h2><p>When the timer ends, step away for a moment before choosing what’s next.</p></section><section className="card focus-history"><div className="section-head"><div><span className="eyebrow">RECENT SESSIONS</span><h2>Your focus log</h2></div><Clock3 size={17} className="subtle-icon" /></div>{query.isLoading ? <div className="skeleton skel-row" /> : query.error ? <p className="muted-copy">Session history is unavailable right now.</p> : query.data?.items.length ? query.data.items.slice(0, 5).map(s => <div className="session-row" key={s.id}><span className="session-mark"><Check size={13} /></span><div><strong>{Math.round(s.elapsedSeconds / 60)} minutes</strong><span>{stamp(s.startedAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span></div><span className={`session-status session-${s.status}`}>{s.status}</span></div>) : <Empty title="Your first session awaits" detail="A little focus, whenever you’re ready." />}</section></aside></div></div>;
+  const mins = Math.floor(remaining / 60).toString().padStart(2, '0');
+  const secs = (remaining % 60).toString().padStart(2, '0');
+
+  return <div className="page-enter">
+    <PageTitle eyebrow="One thing at a time" title="Focus" detail="A quiet timer for making a little progress." />
+    <div className="focus-layout">
+      <section ref={focusPanelRef} className={`focus-main card ${isFullscreen ? 'focus-fullscreen' : ''}`}>
+        <div className="focus-top">
+          <span className="eyebrow">{sessionId ? 'SESSION IN PROGRESS' : 'YOUR FOCUS SPACE'}</span>
+          <div className="focus-top-actions">
+            <span className="focus-status"><span className={running ? 'signal-dot' : 'signal-dot signal-muted'} />{running ? 'In focus' : sessionId ? 'Paused' : `${settings.data?.focusMinutes || 25} minute session`}</span>
+            <button className="focus-fullscreen-toggle" type="button" onClick={() => void toggleFullscreen()} aria-label={isFullscreen ? 'Exit full screen timer' : 'Open full screen timer'} title={isFullscreen ? 'Exit full screen' : 'Full screen'}>
+              {isFullscreen ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+              <span>{isFullscreen ? 'Exit full screen' : 'Full screen'}</span>
+            </button>
+          </div>
+        </div>
+        <div className="timer-ring" role="timer" aria-label={`${mins}:${secs} remaining`}>
+          <div className="timer-inner"><span className="timer-time">{mins}:{secs}</span><span>{running ? 'stay with it' : sessionId ? 'take your time' : 'make a start'}</span></div>
+        </div>
+        <p className="focus-encouragement">{running ? 'You don’t have to hurry. Just keep this one moment.' : 'Choose one small thing. The rest can wait.'}</p>
+        <div className="focus-controls">
+          {sessionId ? <>
+            <Button kind="outline" onClick={toggleTimer} disabled={update.isPending}>{running ? 'Pause timer' : 'Resume timer'}</Button>
+            <Button kind="primary" onClick={() => finish('completed')} disabled={update.isPending}><Check size={16} /> Finish session</Button>
+            <Button kind="quiet" onClick={() => finish('interrupted')} disabled={update.isPending}>End early</Button>
+          </> : <Button kind="primary" onClick={begin} disabled={create.isPending}><Focus size={16} /> {create.isPending ? 'Starting…' : 'Begin focus'}</Button>}
+        </div>
+      </section>
+      <aside className="focus-aside">
+        <section className="focus-tip card"><span className="tip-symbol"><Sparkles size={17} /></span><span className="eyebrow">A gentle reminder</span><h2>Rest is part of the work.</h2><p>When the timer ends, step away for a moment before choosing what’s next.</p></section>
+        <section className="card focus-history">
+          <div className="section-head"><div><span className="eyebrow">RECENT SESSIONS</span><h2>Your focus log</h2></div><Clock3 size={17} className="subtle-icon" /></div>
+          {query.isLoading ? <div className="skeleton skel-row" /> : query.error ? <p className="muted-copy">Session history is unavailable right now.</p> : query.data?.items.length ? query.data.items.slice(0, 5).map(session => <div className="session-row" key={session.id}><span className="session-mark"><Check size={13} /></span><div><strong>{Math.round(session.elapsedSeconds / 60)} minutes</strong><span>{stamp(session.startedAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span></div><span className={`session-status session-${session.status}`}>{session.status}</span></div>) : <Empty title="Your first session awaits" detail="A little focus, whenever you’re ready." />}
+        </section>
+      </aside>
+    </div>
+  </div>;
 }
 
 function NotificationsPage() {

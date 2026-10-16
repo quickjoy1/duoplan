@@ -710,10 +710,14 @@ router.patch("/tasks/:taskId", async (req, res): Promise<void> => {
   } else if (data.priority && data.priority !== prior[0].priority) {
     await addActivity(context.workspace.id, context.profileId, "task.priority", `Changed priority for “${row.title}”`);
   }
-  if (
-    (data.status && ["Completed", "Cancelled"].includes(data.status)) ||
-    (data.dueAt !== undefined && iso(prior[0].dueAt) !== iso(row.dueAt))
-  ) {
+  const dueDateChanged = data.dueAt !== undefined && iso(prior[0].dueAt) !== iso(row.dueAt);
+  const taskClosed = data.status && ["Completed", "Cancelled"].includes(data.status);
+  if (dueDateChanged) {
+    await db.delete(notificationsTable).where(and(
+      eq(notificationsTable.workspaceId, context.workspace.id),
+      eq(notificationsTable.taskId, row.id),
+    ));
+  } else if (taskClosed) {
     await db.delete(notificationsTable).where(and(eq(notificationsTable.workspaceId, context.workspace.id), eq(notificationsTable.taskId, row.id), isNull(notificationsTable.readAt)));
   }
   res.json(UpdateTaskResponse.parse(taskDto(row)));
